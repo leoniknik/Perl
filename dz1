@@ -1,0 +1,37 @@
+1)	perl -e '$f = <>; while(<>) {for($i=0; $i<=7; $i++){s/\s+/;/;} print $_;}' 
+
+2)	perl -lF';' -e 'if( $F[4] > 1024 ){ print $F[8]; $i++;} }{ print ($., " ", $i);'
+
+3)
+	
+use strict;
+use Data::Dumper;
+use DDP;
+my @a = ();
+my @f = ();
+while (<>) {
+    @a = split /;/, $_;
+    push @f, @a;
+}
+print Dumper(@f);
+p @f;
+
+4)
+
+l
+w @a
+w @f
+n
+n
+n
+n
+n
+n
+n
+n
+n
+c
+q
+
+
+
