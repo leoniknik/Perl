@@ -1,6 +1,6 @@
 1)	perl -e '$f = <>; while(<>) {for($i=0; $i<=7; $i++){s/\s+/;/;} print $_;}' 
 
-2)	perl -lF';' -e 'if( $F[4] > 1024 ){ print $F[8]; $i++;} }{ print ($., " ", $i);'
+2)	perl -lF';' -e 'if( $F[4] > 1024**2 ){ print $F[8]; $i++;} }{ print ($., " ", $i);'
 
 3)
 	
@@ -8,10 +8,13 @@ use strict;
 use Data::Dumper;
 use DDP;
 my @a = ();
-my @f = ();
+my $i;
+my @f;
 while (<>) {
+    chop;
     @a = split /;/, $_;
-    push @f, @a;
+    push @{$f[$i]}, @a;
+    $i++;
 }
 print Dumper(@f);
 p @f;
