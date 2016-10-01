@@ -3,7 +3,41 @@ my $expr = "- 16 + 2 * 0.3e+2 - .5 ^ ( 2 - 3 )";
 
 sub tokenize {
 	chomp(my $expr = shift);
-	my @res = split/\s+/, $expr;
+	my @temp = split//, $expr;
+	my @res;
+	my $str_temp = "";
+	my $flag = 0;
+	my $flag_e = 0;
+	for (@temp){
+		if ($_ eq " ") {
+			if ($flag) {
+				push(@res,$str_temp);
+				$str_temp = "";
+            }
+			$flag = 0;
+			$flag_e = 0;
+        }
+		elsif($_ =~ /[0-9\.e]/){
+			if ($_ eq "e") {
+                $flag_e = 1;
+            }
+			$flag = 1;
+			$str_temp.=$_;
+		}
+		elsif($_ =~ /[\+\-\*\/\^\(\)]/){
+			if ($flag_e&&$_ eq "+") {
+                $str_temp.=$_;
+				$flag_e = 0;
+            }
+			else{
+				if ($flag) {
+				push(@res,$str_temp);
+				$str_temp = "";
+				}
+				push(@res,$_);
+			}
+		}
+	}
    	for(@res){
         	if ($_ =~ /[\.e]/){
 			$_ = 0+$_;  
