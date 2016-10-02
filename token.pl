@@ -33,8 +33,10 @@ sub tokenize {
 				if ($flag) {
 				push(@res,$str_temp);
 				$str_temp = "";
+				$flag = 0;
 				}
 				push(@res,$_);
+				
 			}
 		}
 	}
@@ -286,4 +288,4 @@ sub calc
 	}
 	return pop(@stack);
 }
-print calc(rpn($expr));
+print calc(rpn(" -1+-+1  "));
