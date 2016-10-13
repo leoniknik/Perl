@@ -18,10 +18,10 @@ BEGIN{
 no warnings 'experimental';
 
 sub evaluate {
+	#test
     my $rpn   = shift;
     my @stack = ();
     my @token = @{$rpn};
-
     my $res;
     for (@token) {
 		given ($_) {
@@ -73,7 +73,7 @@ sub evaluate {
 	        }
 	    }
 	}
-    if ( (@stack > 1) or (!($stack[-1])) ) {
+    if (@stack > 1) {
         die 'NaN';
 		exit;
     }

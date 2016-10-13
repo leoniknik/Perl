@@ -26,73 +26,61 @@ BEGIN{
 no warnings 'experimental';
 
 sub tokenize {
-	
     chomp( my $expr = shift );
-	my @split = split m{(\s+|[*()/^]|(?<!e)[+-])}x, $expr;
-	my @temp= grep ( !m/^(\s*|)$/, @split );
-    my @res = ();
-    my $skobka = 0;
+    my @source = grep ( !m/^(\s*|)$/, split m{
+            (
+                (?<!e) [+-]
+                |
+                [*()/^]
+                |
+                \s+
+            )
+        }x, $expr );
+    my @result;
+
+    my $parenthes = 0;
     my $operators = 0;
     my $numbers = 0;
-    my $prev = "";
-    my $prev_type = "";
-    for (@temp) {
-        if ( $_ =~ m/^[-+]$/ and $prev =~ m/^((\(|\s|)|([\+\-\/\*\^\(]))$/ )
-		{
-            $prev_type = "unary";
-			if ($_ eq "+") {
-                 push(@res, "U+");
-            }
-            if ($_ eq "-") {
-                 push(@res, "U-");
-            }
+    my $previous = "";
+    my $previous_type = "";
+
+    for (@source) {
+        if ( $_ =~ m/^[-+]$/ and $previous =~ m/^((\(|\s|)|([\+\-\/\*\^\(]))$/ ) {
+            $previous_type = "unary";
+            push( @result, "U" . $_ );
         }
         elsif ( $_ =~ m/^\d+$/ ) {
             $numbers += 1;
-            $prev_type = "num";
-            push( @res, $_ )
+            $previous_type = "num";
+            push( @result, "" . $_ )
         }
         elsif ( $_ =~ m/^\d*\.?\d+((e?[-+]?\d+)|(\d*))$/ ) {
             $numbers += 1;
-            $prev_type = "num";
-            push( @res,  0+$_ );
+            $previous_type = "num";
+            push( @result,  sprintf("%g", $_) );
         }
         else {
-			if (( $_ =~ m/^([\+\-\*\/\^])$/)) {
-                $prev_type = "operator";
-				$operators += 1;
-            }
-			else
-			{
-				$prev_type = "skobka";
-				if ($_ =~ m/^\($/) {
-                    $skobka += 1;
-                }
-				elsif($_ =~ m/^\)$/)
-				{
-					$skobka -= 1;
-				}
-                
-			}
-            push( @res, $_ );
+            $previous_type = ( $_ =~ m/^([\+\-\*\/\^])$/ ? "operator" : "skobka" );
+            $operators += ( $_ =~ m/^([\+\-\*\/\^])$/ ? 1 : 0 );
+            $parenthes += ( $_ =~ m/^\($/ ? 1 : ( $_ =~ m/^\)$/ ? -1 : 0 ) );
+            push( @result, $_ );
         }
-        $prev = $_;
+        $previous = $_;
     }
 
     if ( !$numbers ) {
-        die "Ошибка, это не число";
+        die "There's no number!";
     }
 
-    if ( $skobka ) {
-        die "Неверное число ()";
+    if ( $parenthes ) {
+        die "Mismatch number of parentheses!";
     }
 
     if (!($numbers == $operators + 1)) {
-        die "Неверное число операторов и чисел"
+        die "Mismatch numbers and operators!"
     };
 
-    return \@res;
+    return \@result;
 }
 
 1;
-
