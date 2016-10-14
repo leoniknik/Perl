@@ -23,25 +23,22 @@ require "$FindBin::Bin/../lib/tokenize.pl";
 
 
 sub rpn {
-    my $expr   = shift;
-    my @source = @{tokenize($expr)};
-
+    my $expr = shift;
+    my @temp = @{tokenize($expr)};
     my @stack;
     my @rpn;
-
     my $value = "";
-
     my %operators = (
-        "U-" => { "precedence" => "5", "associativity" => "right" },
-        "U+" => { "precedence" => "5", "associativity" => "right" },
-        "^"  => { "precedence" => "4", "associativity" => "right" },
-        "*"  => { "precedence" => "3", "associativity" => "left" },
-        "/"  => { "precedence" => "3", "associativity" => "left" },
-        "+"  => { "precedence" => "2", "associativity" => "left" },
-        "-"  => { "precedence" => "2", "associativity" => "left" },
+        "U-" => { "prec" => "5", "assoc" => "right" },
+        "U+" => { "prec" => "5", "assoc" => "right" },
+        "^"  => { "prec" => "4", "assoc" => "right" },
+        "*"  => { "prec" => "3", "assoc" => "left" },
+        "/"  => { "prec" => "3", "assoc" => "left" },
+        "+"  => { "prec" => "2", "assoc" => "left" },
+        "-"  => { "prec" => "2", "assoc" => "left" },
     );
 
-    for (@source) {
+    for (@temp) {
         given ($_) {
             when ( $_ =~ m/\d+\.?\d*/ ) {
                 push(@rpn, $_);
@@ -69,13 +66,13 @@ sub rpn {
                         and
                         (
                             (
-                                ($operators{$_}->{"associativity"} eq "left") and
-                                ($operators{$_}->{"precedence"} <= $operators{$stack[-1]}->{"precedence"})
+                                ($operators{$_}->{"assoc"} eq "left") and
+                                ($operators{$_}->{"prec"} <= $operators{$stack[-1]}->{"prec"})
                             )
                             or
                             (
-                                ($operators{$_}->{"associativity"} eq "right") and
-                                ($operators{$_}->{"precedence"} < $operators{$stack[-1]}->{"precedence"})
+                                ($operators{$_}->{"assoc"} eq "right") and
+                                ($operators{$_}->{"prec"} < $operators{$stack[-1]}->{"prec"})
                             )
                         )
                 ) {

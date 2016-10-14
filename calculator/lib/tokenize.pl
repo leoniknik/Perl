@@ -27,7 +27,7 @@ no warnings 'experimental';
 
 sub tokenize {
     chomp( my $expr = shift );
-    my @source = grep ( !m/^(\s*|)$/, split m{
+    my @temp = grep ( !m/^(\s*|)$/, split m{
             (
                 (?<!e) [+-]
                 |
@@ -36,51 +36,51 @@ sub tokenize {
                 \s+
             )
         }x, $expr );
-    my @result;
+    my @res;
 
-    my $parenthes = 0;
+    my $skobka = 0;
     my $operators = 0;
     my $numbers = 0;
-    my $previous = "";
-    my $previous_type = "";
+    my $prev = "";
+    my $prev_type = "";
 
-    for (@source) {
-        if ( $_ =~ m/^[-+]$/ and $previous =~ m/^((\(|\s|)|([\+\-\/\*\^\(]))$/ ) {
-            $previous_type = "unary";
-            push( @result, "U" . $_ );
+    for (@temp) {
+        if ( $_ =~ m/^[-+]$/ and $prev =~ m/^((\(|\s|)|([\+\-\/\*\^\(]))$/ ) {
+            $prev_type = "unary";
+            push( @res, "U" . $_ );
         }
         elsif ( $_ =~ m/^\d+$/ ) {
             $numbers += 1;
-            $previous_type = "num";
-            push( @result, "" . $_ )
+            $prev_type = "num";
+            push( @res, "" . $_ )
         }
         elsif ( $_ =~ m/^\d*\.?\d+((e?[-+]?\d+)|(\d*))$/ ) {
             $numbers += 1;
-            $previous_type = "num";
-            push( @result,  sprintf("%g", $_) );
+            $prev_type = "num";
+            push( @res,  0+$_ );
         }
         else {
-            $previous_type = ( $_ =~ m/^([\+\-\*\/\^])$/ ? "operator" : "skobka" );
+            $prev_type = ( $_ =~ m/^([\+\-\*\/\^])$/ ? "operator" : "skobka" );
             $operators += ( $_ =~ m/^([\+\-\*\/\^])$/ ? 1 : 0 );
-            $parenthes += ( $_ =~ m/^\($/ ? 1 : ( $_ =~ m/^\)$/ ? -1 : 0 ) );
-            push( @result, $_ );
+            $skobka += ( $_ =~ m/^\($/ ? 1 : ( $_ =~ m/^\)$/ ? -1 : 0 ) );
+            push( @res, $_ );
         }
-        $previous = $_;
+        $prev = $_;
     }
 
     if ( !$numbers ) {
-        die "There's no number!";
+        die "Не число";
     }
 
-    if ( $parenthes ) {
-        die "Mismatch number of parentheses!";
+    if ( $skobka ) {
+        die "Неверное количество скобок";
     }
 
     if (!($numbers == $operators + 1)) {
-        die "Mismatch numbers and operators!"
+        die "Неверное количество операторов!"
     };
 
-    return \@result;
+    return \@res;
 }
 
 1;
