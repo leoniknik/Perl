@@ -10,13 +10,13 @@ our @EXPORT = qw( parse_json );
 use Encode;
 use Unicode::Escape 'unescape';
 #test
-my $numberOfStart = 0;
+my $start = 0;
 sub parse_json {
 	my $source = shift;
 	$source =~ s/\n//gm;
-	if (!$numberOfStart) {
+	if (!$start) {
 		$source = numerize($source);
-		$$numberOfStart++;
+		$start = 1;
 	}
 	my ($firstChar) = ($source =~ /([\[|\{])/);
 	if ($firstChar eq '[') {
