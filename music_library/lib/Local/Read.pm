@@ -52,7 +52,7 @@ sub readMusic {
     if ($keys{"year"}) {
         $keys{"year"} = int($keys{"year"});
     }
-    while (<>) {
+    while ($string = <>) {
         chomp($string);
         my ($band, $year, $album, $track, $format) = ($string =~/^\.\/(.+)\/(\d+)\s\-\s(.+)\/(.+)\.+(.+)$/);
         $year = int($year);
