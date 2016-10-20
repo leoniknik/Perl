@@ -1,163 +1,104 @@
 package Local::JSONParser;
 
-use utf8;
-use JSON::XS;
 use strict;
 use warnings;
 use base qw(Exporter);
 our @EXPORT_OK = qw( parse_json );
 our @EXPORT = qw( parse_json );
-use Encode;
-use Unicode::Escape 'unescape';
-#test
-my $start = 0;
+no warnings 'experimental';
+
 sub parse_json {
-	my $source = shift;
-	$source =~ s/\n//gm;
-	if (!$start) {
-		$source = numerize($source);
-		$start = 1;
-	}
-	my ($firstChar) = ($source =~ /([\[|\{])/);
-	if ($firstChar eq '[') {
-		#array
+    my $source = shift;
+    my ($res) = parse($source);
 
-		$source =~ s/(\d+\[)//;
-		$source =~ s/(.*)(\]\d+)/$1/;
-		if (!$2) {
-			die "Error";
-		}
-		my @result;
-		my $copySource = $source;
-		$copySource =~ s/\s*//gm;
-		if (length($copySource) == 0) {
-			return \@result;
-		}
-		$source .= ",";
-
-		while ($source =~ s{
-			(
-				(?<object>(\d+)\{.*\}\3)\s*,						#Шаблон для объекта
-				|
-				(?<array>(\d+)\[.*\]\5)\s*,							#Шаблон для массива
-				|
-				(?<string>"(?:[^"\\]|\\(?:["\\\/bfnrt]|(?:u\d{4})))*")\s*,		#Шаблон для string
-				|
-				(?<number>(?:\-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE](?:\+|\-)?\d+)?))\s*,	#Шаблон для number
-				)
-			}{}xm) {
-			my ($string, $number, $object, $array) = ($+{string}, $+{number}, $+{object}, $+{array});
-			if ($string) {
-				$string =~ s/^"//;
-				$string =~ s/"$//;
-				$string = toText($string);
-				push(@result, $string);
-			} elsif ($object) {
-				push(@result, parse_json($object));
-			} elsif ($array) {
-				push(@result, parse_json($array));
-			} elsif ($number or $number == 0) {
-				push(@result, $number);
-			}
-		}
-		$source =~ s/\s*//g;
-		if (length($source) != 0) {
-			die "Error";
-		}
-		return \@result;
-	} elsif ($firstChar eq '{') {
-		#object
-
-		$source =~ s/(\d+\{)//;
-		$source =~ s/(.*)(\}\d+)/$1/;
-		if (!$2) {
-			die "Error";
-		}
-		my %result;
-		my $copy = $source;
-		$copy =~ s/\s*//gm;
-		if (length($copy) == 0) {
-			return \%result;
-		}
-		$source .= ",";
-		while ($source =~ s{
-			(?<key>"(?:[^"\\]|\\(?:["\\\/bfnrt]|(?:u\d{4})))+") #Шаблон key
-				\s*\:\s*
-				(
-				(?:
-				(?<object>(\d+)\{.*\}\4)\s* 				#Шаблон для объекта
-				|
-				(?<array>(\d+)\[.*\]\6)\s*					#Шаблон для массива
-				|
-				(?<string>"(?:[^"\\]|\\(?:["\\\/bfnrt]|(?:u\d{4})))*")\s*    #Шаблон для string
-				|
-				(?<number>(?:\-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE](?:\+|\-)?\d+)?))\s*		#Шаблон для number
-				)
-				)\s*,
-			}{}xm) {
-
-			my ($key, $string, $number, $object, $array) = ($+{key}, $+{string}, $+{number}, $+{object}, $+{array});
-			$key =~ s/^"//;
-			$key =~ s/"$//;
-			$key = toText($key);
-			if ($string) {
-				$string =~ s/^"//;
-				$string =~ s/"$//;
-				$string = toText($string);
-				$result{$key} = $string;
-			} elsif ($object) {
-				$result{$key} = parse_json($object);
-			} elsif ($array) {
-				$result{$key} = parse_json($array);
-			} elsif ($number or $number == 0) {
-				$result{$key} = $number;
-			}
-		}
-		$source =~ s/\s*//g;
-		if (length($source) != 0) {
-			die "Error";
-		}
-		return \%result;
-	} else {
-		die "Error";
-	}
-	#return JSON::XS->new->utf8->decode($source);
-	return {};
+    return $res;
 }
 
-sub toText {
-	my $string = shift();
-	if ($string eq "") {
-		return $string;
-	}
-	$string = unescape($string);
-	$string =~ s/\\b/\b/g;
-	$string =~ s/\\f/\f/g;
-	$string =~ s/\\n/\n/g;
-	$string =~ s/\\r/\r/g;
-	$string =~ s/\\t/\t/g;
-	$string =~ s/\\\//\//g;
-	$string =~ s/\\"/"/g;
-	$string =~ s/\\\\/\\/g;
+sub parse {
+    my $pattern_num = qr/\-?(?:[1-9]\d*|0)(?:\.\d+)?(?:[eE][\+-]?\d+)?/;
+    my $pattern_str = qr/\"(?:[^"\\]|\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"/;
+    my $source = shift;
+    my %patterns = (
+        number => \{pattern => $pattern_num, parser => \&num},
+        string => \{pattern => $pattern_str, parser => \&str}
+    );
+    for (values %patterns) {
+        if ($source =~ /^(${$$_}{pattern})(.*)/sg) {
+            return wantarray ? (${$$_}{parser}($1), $2) : ${$$_}{parser}($1);
+        }
+    }
+    if ($source =~ /\G\s*\{\s*(.*)/sgc) {
+        my %h;
+        $source = $1;
 
-	return decode('utf8', $string);
+        die "Not a JSON" if ($source =~ /^\s*$/);
+
+        while ($source =~ /[\w\{\[,]/sg){
+            my $key; my $val;
+
+            die "Not a JSON" if !(defined ($source));
+
+            ($key, $source) = parse($source);
+            $source =~ s/\s*:\s*//;
+
+            die "Not a JSON" if !(defined ($source));
+
+            ($val, $source) = parse($source);
+
+            die "Not a JSON" if !(defined ($source));
+
+            $h{$key} = $val;
+
+            die "Not a JSON" if ($source =~ /^\s*$/);
+
+            $source =~ s/^\s*,\s*//;
+            last if ($source =~ s/^\s*\}//);
+        }
+        return wantarray ? (\%h, $source) : \%h;
+    }
+    if ($source =~ /\G\s*\[\s*(.*)/sgc) {
+        my @arr;
+        $source = $1;
+
+        die "Not a JSON" if ($source =~ /^\s*$/);
+        while ($source =~ /[\w\{\[,]/sg) {
+            my $val;
+
+            ($val, $source) = parse($source);
+
+            die "Not a JSON" if !(defined ($source));
+
+            push @arr, $val;
+
+            die "Not a JSON" if ($source =~ /^\s*$/);
+
+            $source =~ s/^\s*,\s*//;
+            last if ($source =~ s/^\s*\]//);
+        }
+        return wantarray ? (\@arr, $source) : \@arr;
+    }
+    return {};
 }
 
-sub numerize {
-	my @num = ();
-	my $count = 1;
-	my $source = shift;
-	my @arr = split(//, $source);
-	foreach my $i (@arr) {
-		if ($i eq '[' or $i eq '{') {
-			$i = $count.$i;
-			push(@num, $count++);
-		} elsif ($i eq ']' or $i eq '}') {
-			$i = $i.pop(@num);
-		}
-	}
-	return join('', @arr);
+sub str {
+    $_ = shift;
+    s/"$//;
+    s/^"//;
+    s/\\n/\n/g;
+    s/\\t/\t/g;
+    s/\\b/\b/g;
+    s/\\f/\f/g;
+    s/\\r/\r/g;
+    s/\\"/"/g;
+    s/\\u([0-9a-fA-F]{4})/chr(hex($1))/ge;
+    return $_;
+}
+
+sub num {
+    $_ = shift;
+    return (0+$_);
 }
 
 #parse_json('{ "key1":"string \u0451 \n value","key2":-3.1415,"key3": ["nested array"],"key4":{"nested":"object"}}');
+
 1;
