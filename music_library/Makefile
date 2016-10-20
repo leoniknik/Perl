@@ -17,7 +17,7 @@
 #     NAME => q[Local::Iterator]
 #     PREREQ_PM => {  }
 #     TEST_REQUIRES => {  }
-#     VERSION_FROM => q[lib/Local/MusicLibrary.pm]
+#     VERSION_FROM => q[lib/Local/Parse.pm]
 
 # --- MakeMaker post_initialize section:
 
@@ -150,7 +150,7 @@ FULLEXT = Local/Iterator
 BASEEXT = Iterator
 PARENT_NAME = Local
 DLBASE = $(BASEEXT)
-VERSION_FROM = lib/Local/MusicLibrary.pm
+VERSION_FROM = lib/Local/Parse.pm
 OBJECT = 
 LDFROM = $(OBJECT)
 LINKTYPE = dynamic
@@ -162,7 +162,7 @@ C_FILES  =
 O_FILES  = 
 H_FILES  = 
 MAN1PODS = 
-MAN3PODS = lib/Local/MusicLibrary.pm
+MAN3PODS = lib/Local/Parse.pm
 
 # Where is the Config information that we are using/depend on
 CONFIGDEP = $(PERL_ARCHLIBDEP)$(DFSEP)Config.pm $(PERL_INCDEP)$(DFSEP)config.h
@@ -185,22 +185,19 @@ PERL_ARCHIVEDEP    =
 PERL_ARCHIVE_AFTER = 
 
 
-TO_INST_PM = lib/Local/MusicLibrary.pm \
-	lib/Local/Output.pm \
-	lib/Local/Read.pm \
-	lib/Local/Sort.pm \
-	testt.pl
+TO_INST_PM = lib/Local/Format.pm \
+	lib/Local/Parse.pm \
+	lib/Local/Print.pm \
+	lib/Local/Sort.pm
 
-PM_TO_BLIB = lib/Local/MusicLibrary.pm \
-	blib/lib/Local/MusicLibrary.pm \
-	lib/Local/Output.pm \
-	blib/lib/Local/Output.pm \
-	lib/Local/Read.pm \
-	blib/lib/Local/Read.pm \
+PM_TO_BLIB = lib/Local/Format.pm \
+	blib/lib/Local/Format.pm \
+	lib/Local/Parse.pm \
+	blib/lib/Local/Parse.pm \
+	lib/Local/Print.pm \
+	blib/lib/Local/Print.pm \
 	lib/Local/Sort.pm \
-	blib/lib/Local/Sort.pm \
-	testt.pl \
-	$(INST_LIB)/Local/testt.pl
+	blib/lib/Local/Sort.pm
 
 
 # --- MakeMaker platform_constants section:
@@ -424,9 +421,9 @@ POD2MAN = $(POD2MAN_EXE)
 
 
 manifypods : pure_all  \
-	lib/Local/MusicLibrary.pm
+	lib/Local/Parse.pm
 	$(NOECHO) $(POD2MAN) --section=$(MAN3EXT) --perm_rw=$(PERM_RW) -u \
-	  lib/Local/MusicLibrary.pm $(INST_MAN3DIR)/Local::MusicLibrary.$(MAN3EXT) 
+	  lib/Local/Parse.pm $(INST_MAN3DIR)/Local::Parse.$(MAN3EXT) 
 
 
 
@@ -500,7 +497,7 @@ realclean_subdirs :
 # Delete temporary files (via clean) and also delete dist files
 realclean purge ::  clean realclean_subdirs
 	- $(RM_F) \
-	  $(FIRST_MAKEFILE) $(MAKEFILE_OLD) 
+	  $(MAKEFILE_OLD) $(FIRST_MAKEFILE) 
 	- $(RM_RF) \
 	  $(DISTVNAME) 
 
@@ -859,11 +856,10 @@ ppd :
 
 pm_to_blib : $(FIRST_MAKEFILE) $(TO_INST_PM)
 	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', q[$(PM_FILTER)], '\''$(PERM_DIR)'\'')' -- \
-	  lib/Local/MusicLibrary.pm blib/lib/Local/MusicLibrary.pm \
-	  lib/Local/Output.pm blib/lib/Local/Output.pm \
-	  lib/Local/Read.pm blib/lib/Local/Read.pm \
-	  lib/Local/Sort.pm blib/lib/Local/Sort.pm \
-	  testt.pl $(INST_LIB)/Local/testt.pl 
+	  lib/Local/Format.pm blib/lib/Local/Format.pm \
+	  lib/Local/Parse.pm blib/lib/Local/Parse.pm \
+	  lib/Local/Print.pm blib/lib/Local/Print.pm \
+	  lib/Local/Sort.pm blib/lib/Local/Sort.pm 
 	$(NOECHO) $(TOUCH) pm_to_blib
 
 

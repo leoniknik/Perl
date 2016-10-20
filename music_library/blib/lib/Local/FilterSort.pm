@@ -1,9 +1,11 @@
-package Local::Sort;
+package Local::FilterSort;
 
 use strict;
 use warnings;
+
 use List::Util;
 
+# Немного компараторов:
 sub num_comparator { my ($a, $b) = @_; return $a != $b; }
 sub str_comparator { my ($a, $b) = @_; return $a ne $b; }
 sub num_sorter { my ($a, $b, $k) = @_; return $a->{$k} <=> $b->{$k}; }
@@ -16,7 +18,10 @@ my $comparators = { year   => {compare => \&num_comparator, sort => \&num_sorter
                     format => {compare => \&str_comparator, sort => \&str_sorter}
                     };
 
-sub filter {
+# Функция фильтрует музыкальную библиотеку (массив хешей) согласно ключам указанным в хеше %keys
+# Функция принимает указатель на массив хешей (библиотеку музыки) и указатель на %keys
+# Функция возвращает указатель на массив хешей (отфильтрованная библиотека)
+sub filterLib {
     my ($lib, $keys) = @_;
 
     my @necessary_keys = grep {defined($keys->{$_}) and $_ ne 'sort' and $_ ne 'columns'} keys %$keys;    
@@ -24,17 +29,18 @@ sub filter {
     
     for my $node (@$lib) {
         
-        my $flag = 1;
+        my $f = 1;                                            # flag garanties that all keys were passed
         for my $key (@necessary_keys) {
-            $flag = 0 if $comparators->{$key}{compare} ($node->{$key}, $keys->{$key});
+            $f = 0 if $comparators->{$key}{compare} ($node->{$key}, $keys->{$key});
         }
-        push @filtered_lib, $node if $flag;
+        push @filtered_lib, $node if $f;
     }
 
     return \@filtered_lib;
 }
 
-sub sort {
+# Функция сортирует входную библиотеку согласно $keys{sort}
+sub sortLib {
     my ($lib, $keys) = @_;
 
     my $sort_key = $keys->{sort};

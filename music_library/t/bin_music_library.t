@@ -1,29 +1,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8;
+use Test::More;
 
 sub test_bin {
     my ($name, $params, $input, $output) = @_;
 
-    open(my $input_fh, '>', 'input.tmp');
-    $input_fh->print($input);
-    $input_fh->close();
-
-    system("$^X bin/music_library.pl $params < input.tmp > output.tmp");
-
-    my $real_output;
-    {
-        local $/ = undef;
-        open(my $output_fh, '<', 'output.tmp');
-        $real_output = <$output_fh>;
-        $output_fh->close();
-    }
-
-    is($real_output, $output, $name);
-
-    unlink('input.tmp');
-    unlink('output.tmp');
+    $input =~ s/'/'"'"'/;
+    is(`echo -n '$input' | bin/music_library.pl $params`, $output, $name);
 }
 
 test_bin
@@ -43,7 +27,7 @@ OUTPUT
 ;
 
 test_bin
-'no rows', '--band UNKNOWN',
+'empty result', '--band UNKNOWN',
 <<INPUT
 ./B/3210 - AlbumAlbum/x.format
 INPUT
@@ -154,3 +138,5 @@ INPUT
 <<OUTPUT
 OUTPUT
 ;
+
+done_testing();
